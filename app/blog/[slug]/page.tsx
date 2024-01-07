@@ -125,7 +125,8 @@ import { getBlogPosts } from "@/server/blog";
 export async function generateMetadata({
   params,
 }): Promise<Metadata | undefined> {
-  let post = getBlogPosts().find((post) => post.slug === params.slug);
+  let posts = await getBlogPosts(); // Wait for the getBlogPosts function to resolve
+  let post = posts.find((post) => post.slug === params.slug);
   if (!post) {
     return;
   }
@@ -196,8 +197,9 @@ function formatDate(date: string) {
   return `${fullDate} (${formattedDate})`;
 }
 
-export default function Blog({ params }) {
-  let post = getBlogPosts().find((post) => post.slug === params.slug);
+export default async function Blog({ params }) {
+  let posts = await getBlogPosts(); // Wait for the getBlogPosts function to resolve
+  let post = posts.find((post) => post.slug === params.slug);
 
   if (!post) {
     notFound();
