@@ -1,0 +1,258 @@
+---
+title: "Bartek, Ty Mały Kurwiu, Kiedy 80kg Na OHP?"
+publishedAt: "2023-11-11"
+summary: "Including some of my latest hot takes (okay they are pretty mild)."
+image: /images/blog/2023/johnny.svg
+authors:
+  - santiego
+---
+
+Aliquam vel urna posuere, laoreet massa ac, gravida ligula:
+
+- [Content Management](#content-management)
+- [Performance](#performance)
+- [Opinions](#opinions)
+
+<Callout emoji="⚠️" type="warning">
+
+**Disclaimer:** Hello from the Callout.
+
+</Callout>
+
+## Content Management
+
+Vivamus hendrerit risus at ligula imperdiet, ut condimentum est feugiat.
+
+1. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+2. Sed aliquam mi ut vehicula vulputate.
+3. Nulla vitae lectus sed mauris porta iaculis.
+4. Aenean convallis dolor et posuere dictum.
+
+In egestas nulla at ante euismod, nec ultricies massa ornare.
+
+### Nec Ultricies
+
+Vivamus hendrerit risus at ligula imperdiet, ut condimentum est feugiat.
+
+Donec euismod lorem non dictum efficitur:
+
+- `contentlayer`
+- `next-contentlayer`
+- `rehype-autolink-headings`
+- `rehype-pretty-code`
+- `rehype-slug`
+- `remark-gfm`
+- `shiki`
+
+Vivamus hendrerit risus at ligula imperdiet, ut condimentum est feugiat.
+
+```js
+import fs from "fs";
+import path from "path";
+
+function getMDXFiles(dir) {
+  return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
+}
+
+function readMDXFile(filePath) {
+  let rawContent = fs.readFileSync(filePath, "utf-8");
+  return parseFrontmatter(rawContent);
+}
+
+function getMDXData(dir) {
+  let mdxFiles = getMDXFiles(dir);
+  return mdxFiles.map((file) => {
+    let { metadata, content } = readMDXFile(path.join(dir, file));
+    let slug = path.basename(file, path.extname(file));
+    return {
+      metadata,
+      slug,
+      content,
+    };
+  });
+}
+
+export function getBlogPosts() {
+  return getMDXData(path.join(process.cwd(), "content"));
+}
+```
+
+Nullam tincidunt arcu quam, sit amet efficitur odio maximus ut. Donec imperdiet ut ante sed bibendum. Pellentesque viverra efficitur dapibus. Pellentesque fermentum, sapien quis mattis accumsan, nunc felis placerat urna, a consequat nunc augue in eros. Donec quis egestas tortor. Aliquam scelerisque vel diam in vulputate. Duis lacinia sapien eget lorem malesuada, a tincidunt enim lobortis. Proin dictum accumsan congue. Nam ex diam, ultrices id nibh non, volutpat venenatis arcu. Aenean ac massa tellus.
+
+### Proin Ultiricies
+
+Sed in lobortis felis, ac maximus nisi. Nam porta auctor accumsan.
+
+```jsx
+import { highlight } from "sugar-high"; // 1KB new dependency
+
+// This replaces rehype-pretty-code and shiki
+function Code({ children, ...props }) {
+  let codeHTML = highlight(children);
+  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />;
+}
+
+// This replaces rehype-slug
+function slugify(str) {
+  return str
+    .toString()
+    .toLowerCase()
+    .trim() // Remove whitespace from both ends of a string
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/&/g, "-and-") // Replace & with 'and'
+    .replace(/[^\w\-]+/g, "") // Remove all non-word characters except for -
+    .replace(/\-\-+/g, "-"); // Replace multiple - with single -
+}
+
+// This replaces rehype-autolink-headings
+function createHeading(level) {
+  return ({ children }) => {
+    let slug = slugify(children);
+    return React.createElement(
+      `h${level}`,
+      { id: slug },
+      [
+        React.createElement("a", {
+          href: `#${slug}`,
+          key: `link-${slug}`,
+          className: "anchor",
+        }),
+      ],
+      children
+    );
+  };
+}
+```
+
+Oh and that `remark-gfm` I was using for the GitHub style Markdown tables? Again, you can use a React component for that.
+
+```jsx
+function Table({ data }) {
+  let headers = data.headers.map((header, index) => (
+    <th key={index}>{header}</th>
+  ));
+  let rows = data.rows.map((row, index) => (
+    <tr key={index}>
+      {row.map((cell, cellIndex) => (
+        <td key={cellIndex}>{cell}</td>
+      ))}
+    </tr>
+  ));
+
+  return (
+    <table>
+      <thead>
+        <tr>{headers}</tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+}
+```
+
+### Dependency Minimalism
+
+Why go through all of this work to delete dependencies?
+
+After having a blog for 10 years, I've gained a new appreciation for keeping things simple. Now, I'm not going _full_ minimalist here. I still want nice things. But I'm taking more opportunities to simplify and keep more code managed in the repo.
+
+Shoutout to [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) and [react-tweet](https://react-tweet.vercel.app/).
+
+## Performance
+
+Earlier this year, I moved this blog to the [Next.js App Router](https://nextjs.org/docs/app). That came with a subtle but important change: [React Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components) by default.
+
+### Server Components
+
+Server Components are fun. For example, I can embed tweets inside blog posts:
+
+The `Tweet` component handles both data fetching _and_ creating UI, all bundled up in a handy npm package (worth an exception here). Notably, additional Server Components added to my pages aren't increasing the client-side JavaScript bundle. This “templating” remains server-only.
+
+Another example is on [my work page](https://leerob.io/work). I love that I can drop this component in anywhere:
+
+```jsx
+async function Stars() {
+  let res = await fetch("https://api.github.com/repos/vercel/next.js");
+  let json = await res.json();
+  let count = Math.round(json.stargazers_count / 1000);
+  return `${count}k stars`;
+}
+```
+
+### Partial Prerendering
+
+We're also working on something new in Next.js I'm now using here. It enables Next.js to prerender as much of the page as possible to static, leaving holes for dynamic components.
+
+For example, 98% of this blog post page is work that can be prerendering during the build. However, those view counts at the top of the page should be dynamic on every request. With [Partial Prerendering](https://www.partialprerendering.com/), the code for that looks like:
+
+```tsx
+async function Views({ slug }: { slug: string }) {
+  let views = await getViewsCount();
+  incrementViews(slug);
+  // ...
+}
+
+export default function Blog({ params }) {
+  let post = getBlogPosts().find((post) => post.slug === params.slug);
+  // ...
+
+  return (
+    <section>
+      <Suspense fallback={<p className="h-5" />}>
+        <Views slug={post.slug} />
+      </Suspense>
+      <article>{post.content}</article>
+    </section>
+  );
+}
+```
+
+Everything up to the `Suspense` boundary, including the `fallback`, can be prerendered. Then, when the request happens, the static shell is instantly shown, followed by the dynamic content (views) streaming in after the fact.
+
+`getViewsCount` signals to Next.js that it's dynamic through `noStore()`:
+
+```jsx
+export async function getViewsCount() {
+  noStore();
+  let data = await sql`
+    SELECT slug, count
+    FROM views
+  `;
+
+  return data.rows as { slug: string; count: number }[];
+}
+```
+
+And `incrementViews` is a Server Action that can be called like any JavaScript function:
+
+```jsx
+"use server";
+
+import { sql } from "@vercel/postgres";
+
+export async function increment(slug: string) {
+  await sql`
+    INSERT INTO views (slug, count)
+    VALUES (${slug}, 1)
+    ON CONFLICT (slug)
+    DO UPDATE SET count = views.count + 1
+  `;
+}
+```
+
+I'm really happy with this approach. In the past, I had to include more dependencies like `swr` and add additional client-side JavaScript to achieve this. Partial Prerendering feels fast, without giving up the dynamic view counts that I love.
+
+## Opinions
+
+There's an assortment of other opinions I've included here now:
+
+- **Prefer `let` over `const`:** It's fewer characters to write. I'm lazy. Also, this isn't a production codebase here or anything. [Nice post here](https://overreacted.io/on-let-vs-const/) on this topic.
+- **Prefer copy/paste over the wrong abstraction:** I removed `date-fns`, `clsx` / `classnames`, and `gray-matter` for simple copy-pastable alternatives. Sure, they don't support every single feature. But, I don't need it. And if I do later, maybe I'll bring it back.
+- **Prefer loading SVGs as images:** Okay, this one has been hard for me. I've gotten so used to inlining SVGs in React. But starting to change my mind. [Related reading here](https://kurtextrem.de/posts/svg-in-js) and [on svg sprites](https://benadam.me/thoughts/react-svg-sprites/).
+- **Prefer larger files versus many components:** Just works for my brain better. Keep code that changes often close together. Your mileage may vary.
+- **Prefer colocating most things in `app/`:** Because, _why not_? Now that it's possible with the App Router I'm probably overusing this, but it feels nice.
+- **Prefer colocating styles with components:** Okay, I've been using Tailwind now for many years, but this is still worth mentioning. Similar to my content evolution, I went from CSS → Sass → styled-components → Chakra → Tailwind. [Give it a shot](https://adamwathan.me/css-utility-classes-and-separation-of-concerns). P.S. LLMs are very good at Tailwind.
+
+## Conclusion
+
+May the big calves be with you 🫡
