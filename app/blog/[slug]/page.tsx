@@ -121,6 +121,8 @@ import { Suspense, cache } from "react";
 import { notFound } from "next/navigation";
 import { Mdx } from "@/components/mdx";
 import { getBlogPosts } from "@/server/blog";
+import { getPublicData } from "@/server/queries";
+import ViewCounter from "@/components/view-counter";
 
 export async function generateMetadata({
   params,
@@ -236,8 +238,8 @@ export default async function Blog({ params }) {
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {formatDate(post.metadata.publishedAt)}
         </p>
-        <Suspense fallback={<p className="h-5" />}>
-          <div>siema</div>
+        <Suspense fallback={<p className="h-5">LADUJE SIE MALY KURWIUUUU</p>}>
+          <Views />
         </Suspense>
       </div>
       <article className="prose prose-quoteless prose-neutral dark:prose-invert">
@@ -245,4 +247,14 @@ export default async function Blog({ params }) {
       </article>
     </section>
   );
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function Views() {
+  await sleep(2000);
+  let views = await getPublicData();
+  return <div>{views.title}</div>;
 }
