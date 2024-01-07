@@ -43,9 +43,14 @@ function extractTweetIds(content) {
 
 async function getMDXData(dir) {
   let mdxFiles = getMDXFiles(dir);
-  let promises = mdxFiles.map(async (file) => {
-    let { metadata, content } = await readMDXFile(path.join(dir, file));
-    let slug = path.basename(file, path.extname(file));
+  let promises = mdxFiles.map((file) =>
+    readFile(path.join(dir, file), "utf-8")
+  );
+
+  let fileContents = await Promise.all(promises);
+  return fileContents.map((fileContent, index) => {
+    let { metadata, content } = parseFrontmatter(fileContent);
+    let slug = path.basename(mdxFiles[index], path.extname(mdxFiles[index]));
     let tweetIds = extractTweetIds(content);
     return {
       metadata,
@@ -54,10 +59,7 @@ async function getMDXData(dir) {
       content,
     };
   });
-
-  return await Promise.all(promises);
 }
-
 export function getBlogPosts() {
   return getMDXData(path.join(process.cwd(), "content/blog"));
 }
