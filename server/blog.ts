@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { readFile } from "fs/promises";
 
 type Metadata = {
   title: string;
@@ -31,8 +30,8 @@ function getMDXFiles(dir) {
   return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
 }
 
-async function readMDXFile(filePath) {
-  let rawContent = await readFile(filePath, "utf-8");
+function readMDXFile(filePath) {
+  let rawContent = fs.readFileSync(filePath, "utf-8");
   return parseFrontmatter(rawContent);
 }
 
@@ -41,16 +40,11 @@ function extractTweetIds(content) {
   return tweetMatches?.map((tweet) => tweet.match(/[0-9]+/g)[0]) || [];
 }
 
-async function getMDXData(dir) {
+function getMDXData(dir) {
   let mdxFiles = getMDXFiles(dir);
-  let promises = mdxFiles.map((file) =>
-    readFile(path.join(dir, file), "utf-8")
-  );
-
-  let fileContents = await Promise.all(promises);
-  return fileContents.map((fileContent, index) => {
-    let { metadata, content } = parseFrontmatter(fileContent);
-    let slug = path.basename(mdxFiles[index], path.extname(mdxFiles[index]));
+  return mdxFiles.map((file) => {
+    let { metadata, content } = readMDXFile(path.join(dir, file));
+    let slug = path.basename(file, path.extname(file));
     let tweetIds = extractTweetIds(content);
     return {
       metadata,
@@ -60,6 +54,7 @@ async function getMDXData(dir) {
     };
   });
 }
+
 export function getBlogPosts() {
-  return getMDXData(path.join(process.cwd(), "content/blog"));
+  return getMDXData(path.join(process.cwd(), "content"));
 }
