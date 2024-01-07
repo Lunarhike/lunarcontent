@@ -138,12 +138,7 @@ export default async function Blog({ params }) {
   );
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function Views() {
-  await sleep(2000);
   let views = await getPublicData();
-  return <div>{views.title}</div>;
+  return <div>{views?.title}</div>;
 }
