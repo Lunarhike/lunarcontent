@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { readFile } from "fs/promises";
 
 type Metadata = {
   title: string;
@@ -30,8 +31,8 @@ function getMDXFiles(dir) {
   return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
 }
 
-function readMDXFile(filePath) {
-  let rawContent = fs.readFileSync(filePath, "utf-8");
+async function readMDXFile(filePath) {
+  let rawContent = await readFile(filePath, "utf-8");
   return parseFrontmatter(rawContent);
 }
 
@@ -42,8 +43,8 @@ function extractTweetIds(content) {
 
 function getMDXData(dir) {
   let mdxFiles = getMDXFiles(dir);
-  return mdxFiles.map((file) => {
-    let { metadata, content } = readMDXFile(path.join(dir, file));
+  return mdxFiles.map(async (file) => {
+    let { metadata, content } = await readMDXFile(path.join(dir, file));
     let slug = path.basename(file, path.extname(file));
     let tweetIds = extractTweetIds(content);
     return {
