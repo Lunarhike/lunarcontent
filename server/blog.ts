@@ -41,9 +41,9 @@ function extractTweetIds(content) {
   return tweetMatches?.map((tweet) => tweet.match(/[0-9]+/g)[0]) || [];
 }
 
-function getMDXData(dir) {
+async function getMDXData(dir) {
   let mdxFiles = getMDXFiles(dir);
-  return mdxFiles.map(async (file) => {
+  let promises = mdxFiles.map(async (file) => {
     let { metadata, content } = await readMDXFile(path.join(dir, file));
     let slug = path.basename(file, path.extname(file));
     let tweetIds = extractTweetIds(content);
@@ -54,6 +54,8 @@ function getMDXData(dir) {
       content,
     };
   });
+
+  return await Promise.all(promises);
 }
 
 export function getBlogPosts() {
