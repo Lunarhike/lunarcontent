@@ -55,6 +55,7 @@ import { getBlogPosts } from "@/server/blog";
 import { getPublicData } from "@/server/queries";
 import { formatDate } from "@/lib/utils";
 import rehypePrettyCode from "rehype-pretty-code";
+import { Placeholder } from "@/server/placeholder";
 
 export default async function Blog({ params }) {
   let posts = await getBlogPosts(); // Wait for the getBlogPosts function to resolve
@@ -78,43 +79,11 @@ export default async function Blog({ params }) {
         <h1 className="mt-2 font-heading font-bold inline-block text-4xl leading-tight tracking-tight lg:text-5xl ">
           {post.metadata.title}
         </h1>
-        <div className="mt-4 flex space-x-4">
-          {/* {authorsInfo.map((author) => (
-            <Link
-              key={author.name}
-              href={`https://www.linkedin.com/in/${author.linkedIn}`}
-              className="flex items-center space-x-2 text-sm"
-            >
-              <Image
-                loading="lazy"
-                src={author.avatar}
-                alt={author.name}
-                width={42}
-                height={42}
-                className="rounded-full"
-              />
-              <div className="flex-1 text-left leading-tight">
-                <p className="font-medium">{author.name}</p>
-                <p className="text-[12px] text-muted-foreground">@LinkedIn</p>
-              </div>
-            </Link>
-          ))} */}
-        </div>
+        <div className="mt-4 flex space-x-4"></div>
         <Suspense fallback={<div>Loading...</div>}>
-          <Views />
+          <Placeholder />
         </Suspense>
       </div>
-      {/* {data.image && (
-        <Image
-          src={data.image}
-          alt={data.title}
-          width={650}
-          height={650}
-          className="my-8 rounded-md border bg-zinc-500 transition-colors"
-          priority
-          loading="lazy"
-        />
-      )} */}
       <div className="prose prose-quoteless prose-neutral dark:prose-invert py-8">
         <Mdx
           source={post.content}
@@ -136,9 +105,4 @@ export default async function Blog({ params }) {
       </div>
     </main>
   );
-}
-
-async function Views() {
-  let views = await getPublicData();
-  return <div>{views?.title}</div>;
 }
